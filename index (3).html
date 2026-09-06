@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PGRKAM AI Smart Assistant</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    .app {
+      width: min(900px, 94%);
+      margin: 35px auto;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 22px;
+      background: #173f5f;
+      color: white;
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 0;
+      opacity: .9;
+    }
+
+    #chat {
+      height: 520px;
+      overflow-y: auto;
+      padding: 22px;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 13px 16px;
+      margin: 12px 0;
+      border-radius: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      margin-left: auto;
+      background: #dbeafe;
+    }
+
+    .bot {
+      margin-right: auto;
+      background: #f1f5f9;
+    }
+
+    .meta {
+      font-size: 12px;
+      margin-top: 8px;
+      opacity: .7;
+    }
+
+    .service-btn {
+      margin-top: 10px;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      background: #173f5f;
+      color: white;
+    }
+
+    .composer {
+      display: flex;
+      gap: 10px;
+      padding: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    #query {
+      flex: 1;
+      padding: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      outline: none;
+      font-size: 15px;
+    }
+
+    #send {
+      padding: 0 20px;
+      border: 0;
+      border-radius: 10px;
+      background: #173f5f;
+      color: white;
+      cursor: pointer;
+    }
+
+    #send:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .examples {
+      padding: 0 20px 18px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .error {
+      color: #b91c1c;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <h1>PGRKAM AI Smart Assistant</h1>
+    <p>Find the right employment service with natural-language guidance.</p>
+  </header>
+
+  <div id="chat">
+    <div class="message bot">
+      Hello! I can help you find the relevant PGRKAM service.
+
+      Try:
+      • "I want a government job"
+      • "I am 21, passed 12th and want to work in Dubai"
+      • "I want skill training"
+    </div>
+  </div>
+
+  <div class="examples">
+    The assistant provides guidance based on available PGRKAM information.
+    Always verify official notifications for specific eligibility, vacancies and dates.
+  </div>
+
+  <div class="composer">
+    <input
+      id="query"
+      type="text"
+      placeholder="Type your employment query..."
+      autocomplete="off"
+    />
+    <button id="send">Send</button>
+  </div>
+
+</div>
+
+<script>
+  // For local development:
+  const API_URL = window.location.origin;
+
+  // When deployed, replace API_URL with your HTTPS backend URL.
+
+  let profile = {};
+
+  const chat = document.getElementById("chat");
+  const queryInput = document.getElementById("query");
+  const sendButton = document.getElementById("send");
+
+  function addMessage(text, type, extra = null) {
+    const div = document.createElement("div");
+    div.className = `message ${type}`;
+
+    const content = document.createElement("div");
+    content.textContent = text;
+    div.appendChild(content);
+
+    if (extra) {
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent =
+        `Service: ${extra.service} | Confidence: ${extra.confidence}`;
+      div.appendChild(meta);
+
+      if (extra.navigation) {
+        const button = document.createElement("button");
+        button.className = "service-btn";
+        button.textContent = `Open ${extra.service}`;
+        button.onclick = () => openService(extra.service);
+        div.appendChild(button);
+      }
+    }
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function openService(service) {
+    /*
+      IMPORTANT:
+      These are demo service targets.
+
+      Replace this mapping with official/authorized PGRKAM
+      URLs or application routes after integration access.
+    */
+
+    const servicePages = {
+      "Government Jobs": "https://pgrkam.com/",
+      "Private Jobs": "https://pgrkam.com/",
+      "Overseas Employment": "https://pgrkam.com/",
+      "Foreign Study": "https://pgrkam.com/",
+      "Self Employment": "https://pgrkam.com/",
+      "Skill Training": "https://pgrkam.com/",
+      "Job Melas": "https://pgrkam.com/",
+      "Job Helpline": "https://pgrkam.com/",
+      "Counselling and Guidance": "https://pgrkam.com/",
+      "Armed Forces": "https://pgrkam.com/"
+    };
+
+    const url = servicePages[service];
+
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  async function sendMessage() {
+    const query = queryInput.value.trim();
+
+    if (!query) return;
+
+    addMessage(query, "user");
+    queryInput.value = "";
+    sendButton.disabled = true;
+
+    try {
+      const response = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: query,
+          profile: profile
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status !== "success") {
+        throw new Error(data.message || "Unknown server error");
+      }
+
+      profile = data.profile || profile;
+
+      addMessage(
+        data.answer,
+        "bot",
+        {
+          service: data.recommended_service,
+          confidence: data.confidence,
+          navigation: data.navigation
+        }
+      );
+
+    } catch (error) {
+      addMessage(
+        "Backend connection failed. Please try again in a moment.",
+        "bot"
+      );
+
+      console.error(error);
+    } finally {
+      sendButton.disabled = false;
+      queryInput.focus();
+    }
+  }
+
+  sendButton.addEventListener("click", sendMessage);
+
+  queryInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      sendMessage();
+    }
+  });
+</script>
+
+</body>
+</html>
